@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Build ONE shared tarball of @react-native-runtimes/core + /state from the
+  # library's fix/rn-versions branch, and share it with every build job.
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: oven-sh/setup-bun@v2
+      - name: Clone react-native-runtimes @ fix/rn-versions
+        run: git clone --depth 1 --branch fix/rn-versions https://github.com/Szymon20000/react-native-runtimes.git lib
+      - name: Install library workspace deps
+        run: cd lib && bun install
+      - name: Build + pack core and state
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/tarballs"
+          (cd lib/packages/core && bun run build && npm pack --ignore-scripts --pack-destination "$GITHUB_WORKSPACE/tarballs")
+          (cd lib/packages/state && bun run build && npm pack --ignore-scripts --pack-destination "$GITHUB_WORKSPACE/tarballs")
+          mv "$GITHUB_WORKSPACE"/tarballs/react-native-runtimes-core-*.tgz "$GITHUB_WORKSPACE"/tarballs/rnr-core.tgz
+          mv "$GITHUB_WORKSPACE"/tarballs/react-native-runtimes-state-*.tgz "$GITHUB_WORKSPACE"/tarballs/rnr-state.tgz
+          ls -la "$GITHUB_WORKSPACE/tarballs"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rnr-tarballs
+          path: tarballs/*.tgz
+          if-no-files-found: error
+
+  ios:
+    needs: pack
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [RN85, RN83, Expo56, Expo55]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/download-artifact@v4
+        with:
+          name: rnr-tarballs
+          path: tarballs
+      - name: Place shared tarballs
+        run: |
+          mkdir -p "${{ matrix.app }}/vendor"
+          cp tarballs/*.tgz "${{ matrix.app }}/vendor/"
+      - name: Install JS deps
+        run: cd "${{ matrix.app }}" && npm install
+      - name: Expo prebuild (Expo apps)
+        if: startsWith(matrix.app, 'Expo')
+        run: cd "${{ matrix.app }}" && npx expo prebuild -p ios --no-install
+      - name: Pod install
+        run: cd "${{ matrix.app }}/ios" && pod install
+      - name: Build (iOS Simulator)
+        run: |
+          set -o pipefail
+          cd "${{ matrix.app }}/ios"
+          xcodebuild \
+            -workspace "${{ matrix.app }}.xcworkspace" \
+            -scheme "${{ matrix.app }}" \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+  android:
+    needs: pack
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [RN85, RN83, Expo56, Expo55]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+      - uses: actions/download-artifact@v4
+        with:
+          name: rnr-tarballs
+          path: tarballs
+      - name: Place shared tarballs
+        run: |
+          mkdir -p "${{ matrix.app }}/vendor"
+          cp tarballs/*.tgz "${{ matrix.app }}/vendor/"
+      - name: Install JS deps
+        run: cd "${{ matrix.app }}" && npm install
+      - name: Expo prebuild (Expo apps)
+        if: startsWith(matrix.app, 'Expo')
+        run: cd "${{ matrix.app }}" && npx expo prebuild -p android --no-install
+      - name: Gradle assembleDebug
+        run: |
+          cd "${{ matrix.app }}/android"
+          ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=arm64-v8a
+        env:
+          GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx5g
