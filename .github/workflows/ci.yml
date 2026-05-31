@@ -37,7 +37,10 @@ jobs:
 
   ios:
     needs: pack
-    runs-on: macos-15
+    # macOS 26 image ships Xcode 26 / Swift 6.2, required by Expo SDK 56's
+    # prebuilt frameworks (ExpoModulesJSI xcframework resolves an SPM package that
+    # needs Swift tools 6.2; Xcode 16.x / Swift 6.1 fails to resolve it).
+    runs-on: macos-26
     strategy:
       fail-fast: false
       matrix:
