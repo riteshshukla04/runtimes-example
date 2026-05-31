@@ -1,0 +1,25 @@
+{
+  "name": "expo55",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@react-native-runtimes/core": "file:vendor/rnr-core.tgz",
+    "@react-native-runtimes/state": "file:vendor/rnr-state.tgz",
+    "expo": "~55.0.26",
+    "expo-status-bar": "~55.0.6",
+    "react": "19.2.0",
+    "react-native": "0.83.6",
+    "react-native-nitro-modules": "^0.35.9"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "typescript": "~5.9.2"
+  },
+  "private": true
+}
