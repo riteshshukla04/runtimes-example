@@ -15,6 +15,7 @@ import {
 import { TITLES, type Route } from './src/navigation';
 import { CounterScreen } from './src/screens/CounterScreen';
 import { DashboardRoute } from './src/screens/DashboardRoute';
+import { ExpoModulesScreen } from './src/screens/ExpoModulesScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { WorkerScreen } from './src/screens/WorkerScreen';
 
@@ -50,6 +51,7 @@ function App() {
         {route === 'counter' && <CounterScreen />}
         {route === 'worker' && <WorkerScreen />}
         {route === 'dashboard' && <DashboardRoute />}
+        {route === 'expomods' && <ExpoModulesScreen />}
       </View>
     </SafeAreaView>
   );

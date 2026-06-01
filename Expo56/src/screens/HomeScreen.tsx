@@ -5,6 +5,7 @@ const LINKS: { route: Route; label: string; desc: string }[] = [
   { route: 'counter', label: 'Shared Counter', desc: 'State shared across runtimes' },
   { route: 'worker', label: 'Background Worker', desc: 'Awaitable runtimeFunction off the main thread' },
   { route: 'dashboard', label: 'Threaded Dashboard', desc: 'A full screen rendered on a secondary runtime' },
+  { route: 'expomods', label: 'Expo Modules', desc: 'expo-crypto / expo-device on a secondary runtime' },
 ];
 
 export function HomeScreen({ navigate }: { navigate: (route: Route) => void }) {

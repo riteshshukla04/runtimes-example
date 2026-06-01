@@ -6,6 +6,8 @@
     "@react-native-runtimes/core": "file:vendor/rnr-core.tgz",
     "@react-native-runtimes/state": "file:vendor/rnr-state.tgz",
     "expo": "~56.0.8",
+    "expo-crypto": "~56.0.4",
+    "expo-device": "~56.0.4",
     "expo-status-bar": "~56.0.4",
     "react": "19.2.3",
     "react-native": "0.85.3",
